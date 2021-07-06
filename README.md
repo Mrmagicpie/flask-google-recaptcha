@@ -59,7 +59,7 @@ Inside of the form you want to protect, include the tag: **{{ recaptcha }}**. Th
 **Known issue:** If you have defined your own app context_processor this may not work. In order to fix, combine the code below with your context_processor.
 
 ```python
-# This is used so you do not have to use "{{ recaptcha|safe }}"
+# This is used so you don't have to use "{{ recaptcha|safe }}"
 from jinja2 import Markup
 
 @app.context_processor
@@ -89,7 +89,7 @@ def submit():
         pass
 ```
 
-Remember to set SITE_KEY and SECRET_KEY. If you don't, the captcha will not render.
+Remember to set ``site_key`` and ``secret_key``. If you don't, the captcha will not render.
 
 ## API
 
