@@ -9,103 +9,135 @@ Can also be used as standalone
 ---
 
 ## Install
-    pip install Flask-GoogleReCaptcha
 
-    # or
+```shell
+pip install Flask-GoogleReCaptcha
 
-    pip install git+https://github.com/AndersonFirmino/flask-google-recaptcha.git
+# or
 
-    If you are using pipenv
-    pipenv install Flask-GoogleReCaptcha
+pip install git+https://github.com/AndersonFirmino/flask-google-recaptcha.git
 
+# If you are using pipenv
+pipenv install Flask-GoogleReCaptcha
+```
 
-This implementation is pure and has no dependencies from third parties. Works in both Python2 and Python3.
-You can use it in any flask project.
-
-Has Google App Engine (GAE) support!
+This implementation is pure python and has no dependencies from third parties. Works in both Python2 and Python3. It also has Google App Engine (GAE) support!
 
 
 # Usage
 
-### Implementation view.py
+### Implementation
 
-    from flask import Flask
-    from flask_google_recaptcha import GoogleReCaptcha
+```python
+from flask import Flask
+from flask_google_recaptcha import GoogleReCaptcha
 
-    app = Flask(__name__)
-    recaptcha = GoogleReCaptcha(app=app)
+app = Flask(__name__)
+recaptcha = GoogleReCaptcha(app=app)
 
-    # or
+# or
 
-    recaptcha = GoogleReCaptcha()
-    recaptcha.init_app(app)
+recaptcha = GoogleReCaptcha()
+recaptcha.init_app(app)
+```
+
+## Templating
+
+Inside of the form you want to protect, include the tag: **{{ recaptcha }}**. This will insert the code automatically. 
+
+```html
+<form method="post" action="/submit">
+    ... your field
+    ... your field
+
+    {{ recaptcha }}
+
+    [submit button]
+</form>
+```
+
+**Known issue:** If you have defined your own app context_processor this may not work. In order to fix, combine the code below with your context_processor.
+
+```python
+# This is used so you do not have to use "{{ recaptcha|safe }}"
+from jinja2 import Markup
+
+@app.context_processor
+def mycontext():
+    return {"recaptcha": Markup(self.get_code()))
+```
+
+## Verifying a captcha
+
+In the view that will validate the captcha:
+
+```python
+from flask import Flask
+from flask_google_recaptcha import GoogleReCaptcha
+
+app = Flask(__name__)
+recaptcha = GoogleReCaptcha(app=app)
+
+@app.route("/submit", methods=["POST"])
+def submit():
+
+    if recaptcha.verify():
+        # SUCCESS
+        pass
+    else:
+        # FAILED
+        pass
+```
+
+Remember to set SITE_KEY and SECRET_KEY. If you don't, the captcha will not render.
+
+## API
+
+| Function | Return |
+| ------ | ------ |
+| GoogleReCaptcha | Base class, initialize with your app and Site/Secret keys. |
+| GoogleReCaptcha.get_code() | Returns the HTML string for the captcha. |
+| {{ recaptcha }} | Returns a template-safe string for use in Jinja templating |
+| GoogleReCaptcha.verify() | Verify a captcha response. Returns bool |
 
 
-### In your template: **{{ recaptcha }}**
+<!--
+**GoogleReCaptcha(app, site_key, secret_key, is_enabled=True)**
 
-Inside of the form you want to protect, include the tag: **{{ recaptcha }}**
-
-It will insert the code automatically
-
-
-    <form method="post" action="/submit">
-        ... your field
-        ... your field
-
-        {{ recaptcha }}
-
-        [submit button]
-    </form>
-
-
-
-
-### Verify the captcha
-
-In the view that's going to validate the captcha
-
-    from flask import Flask
-    from flask_google_recaptcha import GoogleReCaptcha
-
-    app = Flask(__name__)
-    recaptcha = GoogleReCaptcha(app=app)
-
-    @route("/submit", methods=["POST"])
-    def submit():
-
-        if recaptcha.verify():
-            # SUCCESS
-            pass
-        else:
-            # FAILED
-            pass
-
-
-Remember to set SITE_KEY and SECRET_KEY if not it does not appear!
-
-## Api
-
-**reCaptcha.__init__(app, site_key, secret_key, is_enabled=True)**
-
-**reCaptcha.get_code()**
+**recaptcha.get_code()**
 
 Returns the HTML code to implement. But you can use
 **{{ recaptcha }}** directly in your template
 
-**reCaptcha.verfiy()**
+**recaptcha.verfiy()**
 
 Returns bool
 
-## In Template
+-->
 
-Just include **{{ recaptcha }}** wherever you want to show the recaptcha
+# Config
 
-
-## Config
-
-Flask-ReCaptcha is configured through the standard Flask config API.
+Flask-ReCaptcha is configured through the standard Flask config.
 These are the available options:
 
+## Required
+
+| Option | Type/Definition |
+| ------ | ------ |
+| RECAPTCHA_ENABLED | Bool - Defaults to True, False will bypass validation. |
+| RECAPTCHA_SITE_KEY | Public Key |
+| RECAPTCHA_SECRET_KEY | Private Key |
+
+## Optional
+
+| Option | Type/Definition |
+| ------ | ------ |
+| RECAPTCHA_THEME | String - The theme can be 'light'(default) or 'dark' |
+| RECAPTCHA_TYPE | String - Type of recaptcha can be 'image'(default) or 'audio' |
+| RECAPTCHA_SIZE | String - Size of the image can be 'normal'(default) or 'compact' | 
+| RECAPTCHA_TABINDEX | Int - Tabindex of the widget can be used if the page uses tabidex to make navigation easier. Defaults to 0 |
+
+<!--
 **RECAPTCHA_ENABLED**: Bool - True by default, when False it will bypass validation
 
 **RECAPTCHA_SITE_KEY** : Public key
@@ -121,14 +153,19 @@ The following are **Optional** arguments.
 **RECAPTCHA_SIZE**: String - Size of the image can be 'normal'(default) or 'compact'
 
 **RECAPTCHA_TABINDEX**: Int - Tabindex of the widget can be used, if the page uses tabidex, to make navigation easier. Defaults to 0
+-->
 
-    RECAPTCHA_ENABLED = True
-    RECAPTCHA_SITE_KEY = ""
-    RECAPTCHA_SECRET_KEY = ""
-    RECAPTCHA_THEME = "dark"
-    RECAPTCHA_TYPE = "image"
-    RECAPTCHA_SIZE = "compact"
-    RECAPTCHA_RTABINDEX = 10
+Small code example for these options :D
+
+```python
+app.config['RECAPTCHA_ENABLED'] = True
+app.config['RECAPTCHA_SITE_KEY'] = ""
+app.config['RECAPTCHA_SECRET_KEY'] = ""
+app.config['RECAPTCHA_THEME'] = "dark"
+app.config['RECAPTCHA_TYPE'] = "image"
+app.config['RECAPTCHA_SIZE'] = "compact"
+app.config['RECAPTCHA_TABINDEX'] = 10
+```
 
 ---
 
